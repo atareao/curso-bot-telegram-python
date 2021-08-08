@@ -1,0 +1,39 @@
+#!/usr/bin/with-contenv sh
+
+set -e # Exit immediately if a command exits with a non-zero status.
+set -u # Treat unset variables as an error.
+
+# Setup user/group ids
+setupIDs() {
+  if [ -n "${EB_UID}" ]; then
+    if [ ! "$(id -u ebot)" -eq "${EB_UID}" ]; then
+      
+      # usermod likes to chown the home directory, so create a new one and use that
+      # However, if the new UID is 0, we can't set the home dir back because the
+      # UID of 0 is already in use (executing this script).
+      if [ ! "${EB_UID}" -eq 0 ]; then
+        mkdir /tmp/temphome
+        usermod -d /tmp/temphome ebot
+      fi
+      
+      # Change the UID
+      usermod -o -u "${EB_UID}" ebot
+      
+      # Cleanup the temp home dir
+      if [ ! "${EB_UID}" -eq 0 ]; then
+        usermod -d /app ebot
+        rm -Rf /tmp/temphome
+      fi
+    fi
+  fi
+
+  if [ ! -z "${EB_GID}" ]; then
+    echo "Hay EB_GID definido"
+    if [ ! "$(id -g ebot)" -eq "${EB_GID}" ]; then
+      echo "Aplicando el EB_GID al usuario ebot"
+      groupmod -o -g "${EB_GID}" ebot
+    fi
+  fi    
+}
+
+echo "EJECUTANDO EL SCRIPT DE INICIO"
