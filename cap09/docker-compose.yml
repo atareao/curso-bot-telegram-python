@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  curso:
+    build: ./
+    image: atareao/curso:amd64
+    container_name: curso
+    restart: unless-stopped
+    networks:
+      - proxy
+    env_file:
+      - curso.env
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.curso.loadbalancer.server.port=5000
+      - traefik.http.routers.curso.entrypoints=http
+      - traefik.http.routers.curso.rule=Host(`curso.territoriolinux.es`)
+      - traefik.http.middlewares.curso-https-redirect.redirectscheme.scheme=https
+      - traefik.http.routers.curso.middlewares=wallabot-https-redirect
+      - traefik.http.routers.curso-secure.entrypoints=https
+      - traefik.http.routers.curso-secure.rule=Host(`curso.territoriolinux.es`)
+      - traefik.http.routers.curso-secure.tls=true
+      - traefik.http.routers.curso-secure.tls.certresolver=myresolver
+
+networks:
+  proxy:
+    external: true
